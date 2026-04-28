@@ -10,7 +10,7 @@ export class WebsocketBridge implements ISocketBridge {
   private readonly dataSubject = new Subject<DataPacket>();
 
   private socket: WebSocket | undefined
-  private connected: boolean = false
+  private retry: boolean = true
 
   private sequence: number = 0
 
@@ -24,7 +24,7 @@ export class WebsocketBridge implements ISocketBridge {
 
         this.socket.onopen = () => {
           console.log("Connected!");
-          this.connected = true;
+          this.retry = false;
           this.socket!.binaryType = "arraybuffer";
           resolve();
         };
@@ -34,7 +34,7 @@ export class WebsocketBridge implements ISocketBridge {
         };
 
         this.socket.onclose = () => {
-          if (!this.connected) {
+          if (this.retry) {
             console.log(`Retrying in ${retryDelay}ms...`);
             setTimeout(connect, retryDelay);
           }
@@ -94,6 +94,8 @@ export class WebsocketBridge implements ISocketBridge {
   }
 
   destroy() {
+    console.log("Destroying websocket bridge...");
+    this.retry = false;
     this.socket?.close();
   }
 }

@@ -5,7 +5,7 @@ import {Result} from 'true-myth';
 import { WebSocketService } from './websocket.service';
 
 export enum ErrorType {
-  NotFound = "No session found",
+  NotFound = "Session not found",
   AlreadyExists = "Already Exists"
 }
 

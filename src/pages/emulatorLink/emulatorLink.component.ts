@@ -109,6 +109,8 @@ export class EmulatorLinkComponent {
     this.stepState = StepsState.WaitForLocalServer;
     this.cd.detectChanges();
     let websocketBridge: WebsocketBridge = new WebsocketBridge();
+    this.linkSession?.destroy();
+    this.linkSession = new LinkdeviceExchangeSession(websocketBridge, this.linkDeviceService);
     websocketBridge.close$()
       .pipe(take(1))
       .subscribe(() => {
@@ -122,8 +124,7 @@ export class EmulatorLinkComponent {
         this.timeoutId = undefined;
         this.stepState = StepsState.SettingLinkMode;
         this.cd.detectChanges();
-        this.linkSession?.destroy();
-        this.linkSession = new LinkdeviceExchangeSession(websocketBridge, this.linkDeviceService);
+
       })
     }, delay)
   }

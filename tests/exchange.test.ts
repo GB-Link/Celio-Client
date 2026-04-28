@@ -4,6 +4,7 @@ import { WebSocketService } from "../src/services/websocket.service.js";
 import { LinkdeviceExchangeSession } from '../src/shared/linkdeviceExchangeSession';
 import { LinkDeviceServiceMock, DataArray } from "./mocks/service/linkdevice.service.mock";
 import { CelioDeviceMock } from './mocks/celioDeviceMock';
+import {SocketIOBridge} from '../src/shared/bridges/socketIO.bridge';
 
 test("Exchange Data", () => new Promise<void>(async done => {
 
@@ -23,7 +24,7 @@ test("Exchange Data", () => new Promise<void>(async done => {
   const websocketServiceA = new WebSocketService();
   const playerSessionServiceA = new PlayerSessionService(websocketServiceA);
   const linkDeviceServiceMockA = new LinkDeviceServiceMock(celioDeviceA, celioDeviceB);
-  const linkDeviceExchangeServiceA = new LinkdeviceExchangeSession(websocketServiceA, linkDeviceServiceMockA as any);
+  const linkDeviceExchangeServiceA = new LinkdeviceExchangeSession(new SocketIOBridge(websocketServiceA), linkDeviceServiceMockA as any);
   websocketServiceA.connect();
   let sessionInfo = await playerSessionServiceA.createSession()
   expect(sessionInfo.full).toEqual(false);
@@ -31,7 +32,7 @@ test("Exchange Data", () => new Promise<void>(async done => {
   const websocketServiceB = new WebSocketService();
   const playerSessionServiceB = new PlayerSessionService(websocketServiceB);
   const linkDeviceServiceMockB = new LinkDeviceServiceMock(celioDeviceB, celioDeviceA);
-  const linkDeviceExchangeServiceB = new LinkdeviceExchangeSession(websocketServiceB, linkDeviceServiceMockB as any);
+  const linkDeviceExchangeServiceB = new LinkdeviceExchangeSession(new SocketIOBridge(websocketServiceB), linkDeviceServiceMockB as any);
   websocketServiceB.connect();
   sessionInfo = await playerSessionServiceB.joinSession(sessionInfo.id)
   expect(sessionInfo.full).toEqual(true);

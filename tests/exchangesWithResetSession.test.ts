@@ -5,6 +5,7 @@ import { LinkdeviceExchangeSession } from '../src/shared/linkdeviceExchangeSessi
 import { LinkDeviceServiceMock, DataArray } from "./mocks/service/linkdevice.service.mock";
 import { CelioDeviceMock } from './mocks/celioDeviceMock';
 import {combineLatest} from 'rxjs';
+import {SocketIOBridge} from '../src/shared/bridges/socketIO.bridge';
 
 test("Exchange Data in two sessions", {timeout: 20000}, () => new Promise<void>(async done => {
 
@@ -19,7 +20,7 @@ test("Exchange Data in two sessions", {timeout: 20000}, () => new Promise<void>(
   const websocketServiceA = new WebSocketService();
   const playerSessionServiceA = new PlayerSessionService(websocketServiceA);
   const linkDeviceServiceMockA = new LinkDeviceServiceMock(celioDeviceA, celioDeviceB);
-  let linkDeviceExchangeServiceA = new LinkdeviceExchangeSession(websocketServiceA, linkDeviceServiceMockA as any)
+  let linkDeviceExchangeServiceA = new LinkdeviceExchangeSession(new SocketIOBridge(websocketServiceA), linkDeviceServiceMockA as any)
 
   websocketServiceA.connect();
   let sessionInfo = await playerSessionServiceA.createSession()
@@ -28,11 +29,11 @@ test("Exchange Data in two sessions", {timeout: 20000}, () => new Promise<void>(
   const websocketServiceB = new WebSocketService();
   const playerSessionServiceB = new PlayerSessionService(websocketServiceB);
   const linkDeviceServiceMockB = new LinkDeviceServiceMock(celioDeviceB, celioDeviceA);
-  let linkDeviceExchangeServiceB = new LinkdeviceExchangeSession(websocketServiceB, linkDeviceServiceMockB as any)
+  let linkDeviceExchangeServiceB = new LinkdeviceExchangeSession(new SocketIOBridge(websocketServiceB), linkDeviceServiceMockB as any)
 
   combineLatest(playerSessionServiceA.sessionRenew$, playerSessionServiceB.sessionRenew$).subscribe(() => {
-    linkDeviceExchangeServiceA = new LinkdeviceExchangeSession(websocketServiceA, linkDeviceServiceMockA as any)
-    linkDeviceExchangeServiceB = new LinkdeviceExchangeSession(websocketServiceB, linkDeviceServiceMockB as any)
+    linkDeviceExchangeServiceA = new LinkdeviceExchangeSession(new SocketIOBridge(websocketServiceA), linkDeviceServiceMockA as any)
+    linkDeviceExchangeServiceB = new LinkdeviceExchangeSession(new SocketIOBridge(websocketServiceB), linkDeviceServiceMockB as any)
     celioDeviceB.restart();
     celioDeviceA.restart();
   })
