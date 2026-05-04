@@ -1,16 +1,14 @@
-import {StatusEmitterInterface} from './statusEmitter.interface';
-import {Observable, Subject, Subscription} from 'rxjs';
+import {StatusEmitterAbstract} from './statusEmitter.abstract';
+import {Subscription} from 'rxjs';
 import {CommandType, DataArray, LinkStatus} from '../common';
 import {LinkDeviceService} from '../../../services/linkdevice.service';
 
-export class StatusEmitterLinkDevice implements StatusEmitterInterface {
+export class StatusEmitterLinkDevice extends StatusEmitterAbstract {
 
   private subscriptions = new Subscription();
 
-  private readonly statusSubject = new Subject<LinkStatus>();
-  private readonly dataSubject = new Subject<DataArray>();
-
   constructor(private linkDeviceServe: LinkDeviceService) {
+    super();
     this.subscriptions.add(
       this.linkDeviceServe
         .statusEvents$
@@ -29,19 +27,11 @@ export class StatusEmitterLinkDevice implements StatusEmitterInterface {
 
   }
 
-  data$(): Observable<DataArray> {
-    return this.dataSubject.asObservable();
-  }
-
-  status$(): Observable<LinkStatus> {
-    return this.statusSubject.asObservable();
-  }
-
-  sendCommand(command: CommandType, args: Uint8Array = new Uint8Array(0)): Promise<boolean>  {
+  receiveCommand(command: CommandType, args: Uint8Array = new Uint8Array(0)): Promise<boolean>  {
     return this.linkDeviceServe.sendCommand(command, args);
   }
 
-  sendData(data: DataArray): Promise<boolean>  {
+  receiveData(data: DataArray): Promise<boolean>  {
     return this.linkDeviceServe.sendData(data)
   }
 

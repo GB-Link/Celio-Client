@@ -18,6 +18,7 @@ export enum LinkStatus {
 
   DeviceReady = 0xFF08,
   EmuTradeSessionFinished = 0xFF09,
+  EmuSessionStarted = 0xFF0A,
 
   StatusDebug = 0xFFFF
 }
@@ -28,7 +29,9 @@ export enum CommandType {
   SetModeMaster = 0x10,
   SetModeSlave = 0x11,
   StartHandshake= 0x12,
-  ConnectLink = 0x13
+  ConnectLink = 0x13,
+
+  EmuSessionStart = 0xFF0A
 }
 
 export enum Mode {

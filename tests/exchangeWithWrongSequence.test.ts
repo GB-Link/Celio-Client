@@ -4,7 +4,7 @@ import { WebSocketService } from "../src/services/websocket.service.js";
 import { LinkExchangeSession } from '../src/shared/linkExchange/linkExchangeSession';
 import { LinkDeviceServiceMock, DataArray } from "./mocks/service/linkdevice.service.mock";
 import {CelioDeviceMock} from './mocks/celioDeviceMock';
-import {DataPacket} from '../src/shared/linkExchange/commandEmitter/commandEmitter.interface';
+import {DataPacket} from '../src/shared/linkExchange/commandEmitter/commandEmitter.abstract';
 import {CommandEmitterSocketIO} from '../src/shared/linkExchange/commandEmitter/commandEmitter.socketIO';
 
 class LinkDeviceExchangeMockWrongSequence extends LinkExchangeSession {
@@ -36,7 +36,7 @@ class LinkDeviceExchangeMockWrongSequence extends LinkExchangeSession {
 
     this.packetBuffer.unshift(packet);
 
-    this.commandEmitter.sendData(this.packetBuffer.pop()!);
+    this.commandEmitter.receiveData(this.packetBuffer.pop()!);
 
     console.log("Send data to socket " + JSON.stringify(packet))
   }

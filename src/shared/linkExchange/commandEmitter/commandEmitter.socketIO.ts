@@ -1,17 +1,15 @@
 import {CommandPacket, DataPacket, StatusPacket} from '../common'
-import {CommandEmitterInterface} from './commandEmitter.interface'
-import {Observable, Subject, Subscription} from 'rxjs';
+import {CommandEmitterAbstract} from './commandEmitter.abstract'
+import {Subscription} from 'rxjs';
 import {WebSocketService} from '../../../services/websocket.service';
 
-export class CommandEmitterSocketIO implements CommandEmitterInterface {
+export class CommandEmitterSocketIO extends CommandEmitterAbstract {
 
   private subscriptions = new Subscription();
-  private readonly closeSubject = new Subject<void>();
-  private readonly commandSubject = new Subject<CommandPacket>();
-  private readonly dataSubject = new Subject<DataPacket>();
 
   constructor(protected websocketService: WebSocketService) {
 
+    super();
     this.subscriptions.add(
       this.websocketService
         .fromEventWithAck<DataPacket>('deviceData')
@@ -41,23 +39,11 @@ export class CommandEmitterSocketIO implements CommandEmitterInterface {
 
   }
 
-  data$(): Observable<DataPacket> {
-    return this.dataSubject.asObservable();
-  }
-
-  command$(): Observable<CommandPacket> {
-    return this.commandSubject.asObservable();
-  }
-
-  close$(): Observable<void> {
-    return this.closeSubject.asObservable();
-  }
-
-  sendData(data: DataPacket) : void {
+  receiveData(data: DataPacket) : void {
     this.websocketService.emit('deviceData', data);
   }
 
-  sendStatus(status: StatusPacket) : void {
+  receiveStatus(status: StatusPacket) : void {
     this.websocketService.emit('deviceStatus', status);
   }
 

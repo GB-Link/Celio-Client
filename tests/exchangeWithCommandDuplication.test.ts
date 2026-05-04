@@ -7,7 +7,7 @@ import {LinkStatus} from '../src/services/linkdevice.service';
 import {v4 as uuidv4} from 'uuid';
 import {CelioDeviceMock} from './mocks/celioDeviceMock';
 import {CommandEmitterSocketIO} from '../src/shared/linkExchange/commandEmitter/commandEmitter.socketIO';
-import {StatusPacket} from '../src/shared/linkExchange/commandEmitter/commandEmitter.interface';
+import {StatusPacket} from '../src/shared/linkExchange/commandEmitter/commandEmitter.abstract';
 
 export class LinkDeviceExchangeMockStatusDuplication extends LinkExchangeSession {
   override handleDeviceStatusToSocket(status: LinkStatus) {
@@ -21,8 +21,8 @@ export class LinkDeviceExchangeMockStatusDuplication extends LinkExchangeSession
     }
 
     const statusPacket: StatusPacket = {uuid: uuidv4(), linkStatus: status};
-    this.commandEmitter.sendStatus(statusPacket);
-    this.commandEmitter.sendStatus(statusPacket);
+    this.commandEmitter.receiveStatus(statusPacket);
+    this.commandEmitter.receiveStatus(statusPacket);
   }
 }
 

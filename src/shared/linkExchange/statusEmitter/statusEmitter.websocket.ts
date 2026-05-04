@@ -1,13 +1,10 @@
-import {CommandEmitterAbstract} from './commandEmitter.abstract'
-import {CommandType, DataArray, UInt16, CommandPacket, DataPacket, StatusPacket} from '../common';
-import {v4 as uuidv4} from 'uuid';
+import {StatusEmitterAbstract} from './statusEmitter.abstract';
+import {CommandType, DataArray, LinkStatus, UInt16} from '../common';
 
-export class CommandEmitterWebsocket extends CommandEmitterAbstract {
+export class StatusEmitterWebsocket extends StatusEmitterAbstract {
 
   private socket: WebSocket | undefined
   private retry: boolean = true
-
-  private sequence: number = 0
 
   open(retryDelay = 1000): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -34,7 +31,6 @@ export class CommandEmitterWebsocket extends CommandEmitterAbstract {
             setTimeout(connect, retryDelay);
           }
           else{
-            this.closeSubject.next();
             console.log("Connection closed");
           }
         };
@@ -49,16 +45,10 @@ export class CommandEmitterWebsocket extends CommandEmitterAbstract {
               view.getUint16(i * 2, false) as UInt16 // false = big-endian
             ) as DataArray;
 
-            this.dataSubject.next(new DataPacket(this.sequence, dataArray));
-            this.sequence++;
-          }
-          else if (event.data === 'sessionClose') {
-            this.destroy();
+            this.dataSubject.next(dataArray);
           }
           else {
-            const cmd = Number(event.data) as CommandType
-            const commandPacket: CommandPacket = { uuid: uuidv4(), command: cmd };
-            this.commandSubject.next(commandPacket);
+            this.statusSubject.next(event.data as LinkStatus);
           }
         };
       }
@@ -67,18 +57,20 @@ export class CommandEmitterWebsocket extends CommandEmitterAbstract {
     })
   }
 
-  receiveData(data: DataPacket) : void {
-    const typedArray = new Uint16Array(data.data);
+  receiveCommand(command: CommandType, args: Uint8Array): Promise<boolean> {
+    if (command === CommandType.SetMode) {
+      command = CommandType.EmuSessionStart
+    }
+    this.socket?.send(command.toString())
+    return Promise.resolve(true);
+  }
+
+  receiveData(data: DataArray): Promise<boolean> {
+    const typedArray = new Uint16Array(data);
     this.socket?.send(typedArray)
+    return Promise.resolve(true);
   }
 
-  receiveStatus(status: StatusPacket) : void {
-    this.socket?.send(status.linkStatus.toString())
-  }
-
-  destroy() {
-    console.log("Destroying websocket bridge...");
-    this.retry = false;
-    this.socket?.close();
+  destroy(): void {
   }
 }

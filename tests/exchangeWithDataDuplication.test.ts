@@ -5,7 +5,7 @@ import {PlayerSessionService} from '../src/services/playersession.service';
 import {LinkExchangeSession} from '../src/shared/linkExchange/linkExchangeSession';
 import {CelioDeviceMock} from './mocks/celioDeviceMock';
 import {CommandEmitterSocketIO} from '../src/shared/linkExchange/commandEmitter/commandEmitter.socketIO';
-import {DataPacket} from '../src/shared/linkExchange/commandEmitter/commandEmitter.interface';
+import {DataPacket} from '../src/shared/linkExchange/commandEmitter/commandEmitter.abstract';
 
 export class LinkDeviceExchangeMockDuplication extends LinkExchangeSession {
 
@@ -26,8 +26,8 @@ export class LinkDeviceExchangeMockDuplication extends LinkExchangeSession {
     if ((data[0] == 0xCAFE) && (data[1] == 0x11)) return;
 
     let packet: DataPacket = new DataPacket(this.transmittedPacketCounter, data);
-    this.commandEmitter.sendData(packet);
-    this.commandEmitter.sendData(packet);
+    this.commandEmitter.receiveData(packet);
+    this.commandEmitter.receiveData(packet);
     this.transmittedPacketCounter++;
     console.log("Send data to socket " + JSON.stringify(packet))
   }
