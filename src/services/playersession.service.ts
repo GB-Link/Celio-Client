@@ -83,6 +83,9 @@ export class PlayerSessionService {
     });
   }
 
+  /**
+   * Leave the current session. Leaving without being in a session will do nothing.
+   */
   leaveSession() {
     if (this.inSession) {
       this.inSession = false;

@@ -1,10 +1,10 @@
-import {Component, inject, ChangeDetectorRef, HostListener} from '@angular/core';
+import {Component, inject, ChangeDetectorRef} from '@angular/core';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
-import {CommandType, DataArray, LinkStatus, Mode} from '../../shared/linkExchange/common';
+import {CommandType, LinkStatus, Mode} from '../../shared/linkExchange/common';
 import {Subscription} from 'rxjs';
 import {PkmnFile} from './pkmnFile';
-import {environment} from '../../environments/environment';
 import {LinkDeviceService} from '../../services/linkdevice.service';
+import {CelioPageAbstract} from '../shared/celioPage.abstact';
 
 enum StepsState {
   ConnectingCelioDevice = 0,
@@ -23,11 +23,10 @@ enum StepsState {
   ],
   templateUrl: './tradeEmu.component.html'
 })
-export class TradeEmuComponent {
+export class TradeEmuComponent extends CelioPageAbstract<StepsState>{
   private linkDeviceService = inject(LinkDeviceService)
   protected linkDeviceConnected = false;
 
-  protected stepState: StepsState = StepsState.ConnectingCelioDevice
   protected StepsState = StepsState;
 
   protected pkmFiles: PkmnFile[] = [];
@@ -36,12 +35,13 @@ export class TradeEmuComponent {
   private disconnectSubscription: Subscription;
   private statusSubscription: Subscription
 
-  constructor(private cd: ChangeDetectorRef) {
+  constructor(cd: ChangeDetectorRef) {
+    super(cd);
+    this.stepState = StepsState.ConnectingCelioDevice;
     this.disconnectSubscription = this.linkDeviceService.disconnectEvents$.subscribe(disconnect => {
       this.linkDeviceConnected = false;
-      this.stepState = StepsState.ConnectingCelioDevice;
       this.pkmFiles = [];
-      this.cd.detectChanges();
+      this.advanceLinkState(StepsState.ConnectingCelioDevice)
     })
 
     this.statusSubscription = this.linkDeviceService.statusEvents$.subscribe(statusEvents => {
@@ -49,7 +49,7 @@ export class TradeEmuComponent {
       if (statusEvents === LinkStatus.EmuTradeSessionFinished) {
         this.pkmFiles = [];
         this.stepState = StepsState.SelectingPokemon;
-        this.cd.detectChanges();
+        this.advanceLinkState(StepsState.SelectingPokemon);
       }
     });
   }
@@ -75,8 +75,7 @@ export class TradeEmuComponent {
       .then(isConnected => {
           this.linkDeviceConnected = isConnected
           if (isConnected) {
-            this.stepState = StepsState.SelectingPokemon;
-            this.cd.detectChanges();
+            this.advanceLinkState(StepsState.SelectingPokemon)
           }
         }
       )
@@ -85,8 +84,7 @@ export class TradeEmuComponent {
   disconnect(): void {
     this.linkDeviceService.sendCommand(CommandType.Cancel);
     this.pkmFiles = [];
-    this.stepState = StepsState.SelectingPokemon;
-    this.cd.detectChanges();
+    this.advanceLinkState(StepsState.SelectingPokemon)
   }
 
   slotSelected($event: Event) {
@@ -158,32 +156,5 @@ export class TradeEmuComponent {
 
   remove(index: number) {
     this.pkmFiles = this.pkmFiles.filter((_, i) => i !== index);
-  }
-
-  protected hasReached(step: StepsState): boolean {
-    return this.stepState >= step;
-  }
-
-  protected yetToReach(step: StepsState): boolean {
-    return this.stepState < step;
-  }
-
-  protected isCurrentlyIn(step: StepsState): boolean {
-    if (this.webUsbError) return false;
-    return this.stepState == step
-  }
-
-  @HostListener('document:keydown', ['$event'])
-  protected handleKeyboardEvent(event: KeyboardEvent) {
-
-    if (environment.production) return;
-
-    if (event.key === 'ArrowUp') {
-      this.stepState++;
-    }
-
-    if (event.key === 'ArrowDown') {
-      this.stepState--;
-    }
   }
 }

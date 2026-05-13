@@ -1,11 +1,11 @@
 import {CommandType, LinkStatus, Mode} from './linkExchange/common';
-import {LinkDeviceService} from '../services/linkdevice.service';
+import {StatusEmitterAbstract} from './linkExchange/statusEmitter/statusEmitter.abstract';
 
 
 export class LinkDeviceUtils {
-  private static sendCancel(linkDeviceService: LinkDeviceService):Promise<void> {
+  static sendCancel(statusEmitter: StatusEmitterAbstract):Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      linkDeviceService.sendCommand(CommandType.Cancel).then(ok => {
+      statusEmitter.receiveCommand(CommandType.Cancel, new Uint8Array(0)).then(ok => {
         if (!ok) {
           reject(new Error('Failed to send Cancel command'));
         }
@@ -14,11 +14,11 @@ export class LinkDeviceUtils {
     });
   }
 
-  private static enableLinkMode(linkDeviceService: LinkDeviceService):Promise<void> {
+  private static enableLinkMode(statusEmitter: StatusEmitterAbstract):Promise<void> {
     let args: Uint8Array = new Uint8Array(1);
     args[0] = Mode.onlineLink;
     return new Promise<void>((resolve, reject) => {
-      linkDeviceService.sendCommand(CommandType.SetMode, args).then(ok => {
+      statusEmitter.receiveCommand(CommandType.SetMode, args).then(ok => {
         if (!ok) {
           reject(new Error('Failed to send SetMode command'));
         }
@@ -27,9 +27,10 @@ export class LinkDeviceUtils {
     })
   }
 
-  private static createReadyPromise(linkDeviceService: LinkDeviceService, timeoutMs = 2500): Promise<void> {
+  private static createReadyPromise(statusEmitter: StatusEmitterAbstract, timeoutMs = 2500): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      const subscription = linkDeviceService.statusEvents$.subscribe(status => {
+      const subscription = statusEmitter.status$().subscribe(status => {
+        console.log("Status: " + LinkStatus[status]);
         if (status === LinkStatus.DeviceReady) {
           cleanup();
           resolve();
@@ -48,11 +49,13 @@ export class LinkDeviceUtils {
     });
   }
 
-  static async tryEnableLinkMode(linkDeviceService: LinkDeviceService) {
-    const waitForReady = this.createReadyPromise(linkDeviceService);
+  static async tryEnableLinkMode(statusEmitter: StatusEmitterAbstract) {
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    const waitForReady = this.createReadyPromise(statusEmitter);
 
-    await this.sendCancel(linkDeviceService);
-    await this.enableLinkMode(linkDeviceService);
+    await this.sendCancel(statusEmitter);
+    await delay(500);
+    await this.enableLinkMode(statusEmitter);
     await waitForReady;
   }
 }

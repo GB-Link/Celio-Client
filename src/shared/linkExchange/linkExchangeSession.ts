@@ -3,6 +3,7 @@ import {CommandEmitterAbstract} from './commandEmitter/commandEmitter.abstract';
 import {v4 as uuidv4} from 'uuid';
 import {CommandPacket, CommandType, DataArray, DataPacket, LinkStatus, StatusPacket} from './common';
 import {StatusEmitterAbstract} from './statusEmitter/statusEmitter.abstract';
+import {LinkDeviceUtils} from '../linkDeviceUtils';
 
 
 export class LinkExchangeSession {
@@ -38,6 +39,7 @@ export class LinkExchangeSession {
       console.log("LinkSession: Unsubscribing from events...");
       this.subscriptions.unsubscribe();
     }))
+    console.log("LinkSession: Subscribing to events...");
   }
 
   handleDeviceDataToSocket(data: DataArray) {
@@ -116,8 +118,10 @@ export class LinkExchangeSession {
   }
 
   destroy() {
+    console.log("LinkSession: Unsubscribing from events...");
     this.subscriptions.unsubscribe();
     this.commandEmitter.destroy();
+    LinkDeviceUtils.sendCancel(this.statusEmitter)
     this.statusEmitter.destroy();
   }
 }

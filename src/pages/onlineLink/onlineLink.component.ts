@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, HostListener, inject, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, inject, ViewChild} from '@angular/core';
 import { NgClass, NgIf } from '@angular/common';
 
 import {CommandType} from '../../shared/linkExchange/common';
@@ -8,11 +8,11 @@ import {PlayerSessionService} from '../../services/playersession.service';
 import {WebSocketService} from '../../services/websocket.service';
 import {LinkExchangeSession} from '../../shared/linkExchange/linkExchangeSession';
 import {ToastComponent} from '../../component/toast.component';
-import {environment} from '../../environments/environment';
 import {LinkDeviceUtils} from '../../shared/linkDeviceUtils';
 import {CommandEmitterSocketIO} from '../../shared/linkExchange/commandEmitter/commandEmitter.socketIO';
 import {LinkDeviceService} from '../../services/linkdevice.service';
 import {StatusEmitterLinkDevice} from '../../shared/linkExchange/statusEmitter/statusEmitter.linkDevice';
+import {CelioPageAbstract} from '../shared/celioPage.abstact';
 
 enum StepsState {
   ConnectingCelioDevice = 0,
@@ -33,7 +33,7 @@ enum StepsState {
   templateUrl: './onlineLink.component.html'
 })
 
-export class OnlineLinkComponent {
+export class OnlineLinkComponent extends CelioPageAbstract<StepsState>{
 
   @ViewChild(ToastComponent) toast!: ToastComponent;
 
@@ -41,7 +41,6 @@ export class OnlineLinkComponent {
 
   protected sessionId: string | undefined = "";
 
-  protected stepState: StepsState = StepsState.ConnectingCelioDevice;
   protected StepsState = StepsState;
 
   private partnerSubscription: Subscription
@@ -51,7 +50,10 @@ export class OnlineLinkComponent {
   private linkSession: LinkExchangeSession | undefined = undefined;
   protected webUsbError: boolean = false;
 
-  constructor(private cd: ChangeDetectorRef, private playerSessionService: PlayerSessionService, private socket: WebSocketService) {
+  constructor(cd: ChangeDetectorRef, private playerSessionService: PlayerSessionService, private socket: WebSocketService) {
+    super(cd);
+    this.stepState = StepsState.ConnectingCelioDevice;
+
     this.partnerSubscription = this.playerSessionService.partnerEvents$.subscribe(partnerConnected => {
       if (partnerConnected) {
         this.advanceLinkState(StepsState.SettingLinkMode);
@@ -107,7 +109,7 @@ export class OnlineLinkComponent {
   }
 
   start() {
-    LinkDeviceUtils.tryEnableLinkMode(this.linkDeviceService)
+    LinkDeviceUtils.tryEnableLinkMode(new StatusEmitterLinkDevice(this.linkDeviceService))
       .then(() => {
         this.advanceLinkState(StepsState.Ready);
       })
@@ -129,7 +131,7 @@ export class OnlineLinkComponent {
       console.error("Could not connect to Server");
     }
     this.playerSessionService.enterSession(userSessionId).then(session => {
-      this.renewLinkSession();
+      this.createLinkSession();
       if (userSessionId) {
         this.advanceLinkState(StepsState.SettingLinkMode);
       } else {
@@ -151,40 +153,8 @@ export class OnlineLinkComponent {
     this.advanceLinkState(StepsState.JoiningSession);
   }
 
-  renewLinkSession() {
+  createLinkSession() {
     this.linkSession?.destroy();
     this.linkSession = new LinkExchangeSession(new CommandEmitterSocketIO(this.socket), new StatusEmitterLinkDevice(this.linkDeviceService));
-  }
-
-  protected hasReached(step: StepsState): boolean {
-    return this.stepState >= step;
-  }
-
-  protected yetToReach(step: StepsState): boolean {
-    return this.stepState < step;
-  }
-
-  protected isCurrentlyIn(step: StepsState): boolean {
-    if (this.webUsbError) return false;
-    return this.stepState == step
-  }
-
-  @HostListener('document:keydown', ['$event'])
-  protected handleKeyboardEvent(event: KeyboardEvent) {
-
-    if (environment.production) return;
-
-    if (event.key === 'ArrowUp') {
-      this.stepState++;
-    }
-
-    if (event.key === 'ArrowDown') {
-      this.stepState--;
-    }
-  }
-
-  private advanceLinkState(step: StepsState) {
-    this.stepState = step;
-    this.cd.detectChanges();
   }
 }

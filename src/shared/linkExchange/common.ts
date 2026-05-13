@@ -7,11 +7,10 @@ export type DataArray = [
 ];
 
 export enum LinkStatus {
-
+  AwaitModeEmulator = 0xFF01,
   AwaitMode = 0xFF02,
   HandshakeReceived = 0xFF03,
   HandshakeFinished = 0xFF04,
-
   LinkConnected = 0xFF05,
   LinkReconnecting = 0xFF06,
   LinkClosed = 0xFF07,

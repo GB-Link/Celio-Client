@@ -72,6 +72,9 @@ export class WebSocketService {
      return firstValueFrom(race(success$, error$));
   }
 
+  /**
+   * Disconnect from the server. Diconnecting a not-connected socket will do nothing.
+   */
   disconnect() {
     if (this.socket.connected) {
       this.socket.disconnect();

@@ -1,8 +1,10 @@
 import {StatusEmitterAbstract} from './statusEmitter.abstract';
 import {CommandType, DataArray, LinkStatus, UInt16} from '../common';
+import {Observable, Subject} from 'rxjs';
 
 export class StatusEmitterWebsocket extends StatusEmitterAbstract {
 
+  protected readonly closeSubject = new Subject<void>();
   private socket: WebSocket | undefined
   private retry: boolean = true
 
@@ -12,7 +14,7 @@ export class StatusEmitterWebsocket extends StatusEmitterAbstract {
       const connect = () => {
         console.log("Trying to connect...");
 
-        this.socket = new WebSocket("http://localhost:51784", "celio_local");
+        this.socket = new WebSocket("http://localhost:51784", "celio_online");
 
         this.socket.onopen = () => {
           console.log("Connected!");
@@ -31,6 +33,7 @@ export class StatusEmitterWebsocket extends StatusEmitterAbstract {
             setTimeout(connect, retryDelay);
           }
           else{
+            this.closeSubject.next();
             console.log("Connection closed");
           }
         };
@@ -48,7 +51,7 @@ export class StatusEmitterWebsocket extends StatusEmitterAbstract {
             this.dataSubject.next(dataArray);
           }
           else {
-            this.statusSubject.next(event.data as LinkStatus);
+            this.statusSubject.next(Number(event.data) as LinkStatus);
           }
         };
       }
@@ -57,10 +60,11 @@ export class StatusEmitterWebsocket extends StatusEmitterAbstract {
     })
   }
 
+  close$(): Observable<void> {
+    return this.closeSubject.asObservable();
+  }
+
   receiveCommand(command: CommandType, args: Uint8Array): Promise<boolean> {
-    if (command === CommandType.SetMode) {
-      command = CommandType.EmuSessionStart
-    }
     this.socket?.send(command.toString())
     return Promise.resolve(true);
   }
@@ -72,5 +76,8 @@ export class StatusEmitterWebsocket extends StatusEmitterAbstract {
   }
 
   destroy(): void {
+    console.log("Destroying websocket bridge...");
+    this.retry = false;
+    this.socket?.close();
   }
 }

@@ -1,14 +1,16 @@
-import {Component, inject, ChangeDetectorRef, HostListener, ViewChild} from '@angular/core';
+import {Component, inject, ChangeDetectorRef, ViewChild} from '@angular/core';
 import {NgClass, NgIf} from '@angular/common';
-import {CommandType, DataArray, LinkStatus, Mode} from '../../shared/linkExchange/common';
+import {CommandType, LinkStatus} from '../../shared/linkExchange/common';
 import {LinkDeviceService} from '../../services/linkdevice.service';
 import {Subscription, take} from 'rxjs';
-import {environment} from '../../environments/environment';
 import {LinkExchangeSession} from '../../shared/linkExchange/linkExchangeSession';
 import {CommandEmitterWebsocket} from '../../shared/linkExchange/commandEmitter/commandEmitter.websocket';
 import {LinkDeviceUtils} from '../../shared/linkDeviceUtils';
 import {ToastComponent} from '../../component/toast.component';
 import {StatusEmitterLinkDevice} from '../../shared/linkExchange/statusEmitter/statusEmitter.linkDevice';
+import {CelioPageAbstract} from '../shared/celioPage.abstact';
+import {EmulatorSelectionService, SupportedEmulators} from '../../services/emulatorSelection.service';
+
 
 enum StepsState {
   ConnectingCelioDevice = 0,
@@ -17,10 +19,6 @@ enum StepsState {
   WaitForLocalServer = 3,
   SettingLinkMode = 4,
   Ready = 5,
-}
-
-enum SupportedEmulators {
-  mGBA = 0,
 }
 
 @Component({
@@ -33,15 +31,15 @@ enum SupportedEmulators {
   ],
   templateUrl: './emulatorLink.component.html'
 })
-export class EmulatorLinkComponent {
+export class EmulatorLinkComponent extends CelioPageAbstract<StepsState>{
 
   @ViewChild(ToastComponent) toast!: ToastComponent;
 
   private linkDeviceService = inject(LinkDeviceService)
   protected linkDeviceConnected = false;
 
-  protected stepState: StepsState = StepsState.ConnectingCelioDevice
   protected StepsState = StepsState;
+  protected readonly SupportedEmulators = SupportedEmulators;
 
   protected webUsbError: boolean = false;
   protected closing: boolean = false;
@@ -52,27 +50,34 @@ export class EmulatorLinkComponent {
   private disconnectSubscription: Subscription;
   private statusSubscription: Subscription
 
-  constructor(private cd: ChangeDetectorRef) {
+  constructor(cd: ChangeDetectorRef, private emulatorSelection: EmulatorSelectionService) {
+    super(cd);
+    this.stepState = StepsState.ConnectingCelioDevice;
+
     this.disconnectSubscription = this.linkDeviceService.disconnectEvents$.subscribe(() => {
       this.linkDeviceConnected = false;
-      this.stepState = StepsState.ConnectingCelioDevice;
+      this.advanceLinkState(StepsState.ConnectingCelioDevice);
       this.linkSession?.destroy();
-      this.cd.detectChanges();
+      this.linkSession = undefined;
     })
 
     this.statusSubscription = this.linkDeviceService.statusEvents$.subscribe(statusEvents => {
       console.log("Status: " + LinkStatus[statusEvents]);
       if (statusEvents === LinkStatus.LinkClosed) {
         this.linkSession?.destroy();
+        this.linkSession = undefined;
         this.startWaitForServer(1500);
-        this.cd.detectChanges();
       }
     });
   }
 
   ngOnInit() {
     if (this.linkDeviceService.isConnected()) {
-      this.stepState = StepsState.ChooseEmulator;
+      if (this.emulatorSelection.isSetupComplete()) {
+        this.startWaitForServer()
+      } else {
+        this.advanceLinkState(StepsState.ChooseEmulator);
+      }
     }
   }
 
@@ -94,24 +99,27 @@ export class EmulatorLinkComponent {
       .then(isConnected => {
         this.linkDeviceConnected = isConnected
         if (isConnected) {
-          this.stepState = StepsState.ChooseEmulator;
-          this.cd.detectChanges();
+          if (this.emulatorSelection.isSetupComplete()) {
+            this.startWaitForServer()
+          } else {
+            this.advanceLinkState(StepsState.ChooseEmulator);
+          }
         }
       })
   }
 
   emulatorSelected(emulator: SupportedEmulators) {
-    this.stepState = StepsState.DownloadPlugin;
-    this.cd.detectChanges();
+    this.emulatorSelection.setSelectedEmulator(emulator)
+    this.advanceLinkState(StepsState.DownloadPlugin)
   }
 
   startWaitForServer(delay: number = 1000) {
+    this.emulatorSelection.setSetupComplete(true)
     if (this.stepState == StepsState.WaitForLocalServer) return;
 
-    this.stepState = StepsState.WaitForLocalServer;
-    this.cd.detectChanges();
+    this.advanceLinkState(StepsState.WaitForLocalServer)
     let websocketBridge: CommandEmitterWebsocket = new CommandEmitterWebsocket();
-    this.linkSession?.destroy();
+    if (this.linkSession != undefined) { this.linkSession?.destroy(); }
     this.linkSession = new LinkExchangeSession(websocketBridge, new StatusEmitterLinkDevice(this.linkDeviceService));
     websocketBridge.close$()
       .pipe(take(1))
@@ -124,60 +132,26 @@ export class EmulatorLinkComponent {
     this.timeoutId = setTimeout(() => {
       websocketBridge.open().then(() => {
         this.timeoutId = undefined;
-        this.stepState = StepsState.SettingLinkMode;
-        this.cd.detectChanges();
-
+        this.advanceLinkState(StepsState.SettingLinkMode);
       })
     }, delay)
   }
 
   start() {
-    LinkDeviceUtils.tryEnableLinkMode(this.linkDeviceService)
+    LinkDeviceUtils.tryEnableLinkMode(new StatusEmitterLinkDevice(this.linkDeviceService))
       .then(() => {
-        this.stepState = StepsState.Ready;
-        this.cd.detectChanges();
+        this.advanceLinkState(StepsState.Ready);
       })
       .catch(error => {
         this.toast.show(error, 'error', 4000)
         console.error(error);
         this.disconnect();
         this.linkSession?.destroy();
+        this.linkSession = undefined;
       })
   }
 
   disconnect(): void {
     this.linkDeviceService.sendCommand(CommandType.Cancel);
-    this.linkSession?.destroy();
-    this.startWaitForServer(1500);
-    this.cd.detectChanges();
   }
-
-  protected hasReached(step: StepsState): boolean {
-    return this.stepState >= step;
-  }
-
-  protected yetToReach(step: StepsState): boolean {
-    return this.stepState < step;
-  }
-
-  protected isCurrentlyIn(step: StepsState): boolean {
-    if (this.webUsbError) return false;
-    return this.stepState == step
-  }
-
-  @HostListener('document:keydown', ['$event'])
-  protected handleKeyboardEvent(event: KeyboardEvent) {
-
-    if (environment.production) return;
-
-    if (event.key === 'ArrowUp') {
-      this.stepState++;
-    }
-
-    if (event.key === 'ArrowDown') {
-      this.stepState--;
-    }
-  }
-
-  protected readonly SupportedEmulators = SupportedEmulators;
 }
