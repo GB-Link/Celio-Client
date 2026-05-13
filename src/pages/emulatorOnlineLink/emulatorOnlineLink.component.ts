@@ -84,6 +84,7 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
   }
 
   ngOnDestroy() {
+    this.closing = true;
     this.partnerSubscription.unsubscribe();
     this.linkSessionCloseSubscription.unsubscribe();
     this.statusEmitterWebsocket?.destroy();
@@ -95,10 +96,11 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
   }
 
   private cleanup() {
+    console.log("Cleanup");
     this.playerSessionService.leaveSession();
     this.socket.disconnect();
     this.linkSession?.destroy();
-    this.startWaitForServer();
+    if (!this.closing) this.startWaitForServer();
   }
 
   startWaitForServer(delay: number = 1000) {
@@ -119,17 +121,6 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
     }, delay)
   }
 
-  start() {
-    LinkDeviceUtils.tryEnableLinkMode(this.statusEmitterWebsocket!)
-      .then(() => {
-        this.advanceLinkState(StepsState.Ready);
-      })
-      .catch(error => {
-        this.toast.show(error, 'error', 4000)
-        console.error(error);
-      })
-  }
-
   async enterSession(userSessionId?: string) {
     if (!await this.socket.connect()) {
       this.toast.show("Could not connect to Server", 'error', 4000)
@@ -148,6 +139,17 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
       console.error(error);
       this.statusEmitterWebsocket?.destroy();
     })
+  }
+
+  start() {
+    LinkDeviceUtils.tryEnableLinkMode(this.statusEmitterWebsocket!)
+      .then(() => {
+        this.advanceLinkState(StepsState.Ready);
+      })
+      .catch(error => {
+        this.toast.show(error, 'error', 4000)
+        console.error(error);
+      })
   }
 
   leaveSession() {
