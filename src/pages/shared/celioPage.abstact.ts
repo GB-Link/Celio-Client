@@ -14,6 +14,16 @@ export class CelioPageAbstract<StateEnumT> {
     return !this.usbSupported && !this.serialSupported;
   }
 
+  // Prefer WebUSB; fall back to WebSerial only when WebUSB is unavailable
+  // (e.g. Firefox 151+, or Chromium with WebUSB disabled).
+  protected get connectTransport(): 'usb' | 'serial' | null {
+    return this.usbSupported ? 'usb' : (this.serialSupported ? 'serial' : null);
+  }
+
+  protected get connectLabel(): string {
+    return this.connectTransport === 'serial' ? 'Connect Serial' : 'Connect USB';
+  }
+
   constructor(private cd: ChangeDetectorRef) {
     // @ts-ignore
     this.stepState = 0;

@@ -12,8 +12,7 @@
     <div class="flex w-full h-[5rem]">
       <div *ngIf="isCurrentlyIn(StepsState.ConnectingCelioDevice)" class="card rounded-box grid grow place-items-center">
         <div class="flex gap-2">
-          <button (click)="connect('usb')" [disabled]="!usbSupported" class="btn">Connect USB</button>
-          <button (click)="connect('serial')" [disabled]="!serialSupported" class="btn">Connect Serial</button>
+          <button *ngIf="connectTransport" (click)="connect(connectTransport)" class="btn">{{ connectLabel }}</button>
         </div>
       </div>
       <div *ngIf="hasReached(StepsState.SelectingPokemon)" class="font-Gen3 text-4xl">
