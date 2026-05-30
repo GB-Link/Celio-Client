@@ -67,7 +67,14 @@
       </li>
     </ul>
   </div>
-  <ul class="menu flex-col h-[11.5em] w-[19em]">
+  <ul class="menu flex-col w-[19em] {{ fromLauncher ? 'h-[17.25em]' : 'h-[11.5em]' }}">
+    @if (fromLauncher) {
+    <li class="flex-1">
+      <a [href]="launcherUrl" class="box-menu w-full font-Gen3 text-2xl menu-item-unselected bg-[#FFFFFF]">
+        Return to Launcher
+      </a>
+    </li>
+    }
     <li class="flex-1">
       <a href="https://gblink.io/" target="_blank" class="box-menu w-full font-Gen3 text-2xl menu-item-unselected bg-[#FFFFFF]" routerLinkActive="menu-item" [routerLinkActiveOptions]="{ exact: true }">
         Get Hardware
