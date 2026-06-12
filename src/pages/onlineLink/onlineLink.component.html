@@ -1,4 +1,22 @@
-<div class="flex w-full flex-col">
+<div *ngIf="awVariantNeeded" class="flex w-full flex-col">
+  <div class="font-Gen3 text-4xl">Select your game</div>
+
+  <div class="divider"></div>
+
+  <div class="box relative">
+    <div class="flex w-full h-[8rem]">
+      <div class="card rounded-box grid grow place-items-center">
+        <button (click)="selectAwVariant(1)" class="btn btn-lg">Advance Wars</button>
+      </div>
+      <div class="divider divider-horizontal"><div class="font-Gen3 text-4xl">OR</div></div>
+      <div class="card rounded-box grid grow place-items-center">
+        <button (click)="selectAwVariant(2)" class="btn btn-lg">Advance Wars 2</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="!awVariantNeeded" class="flex w-full flex-col">
   <ul class="steps w-full">
     <li class="step font-Gen3 text-2xl" [ngClass]="{ 'step-primary': stepState >= 0 }">Connect Celio Device</li>
     <li class="step font-Gen3 text-2xl" [ngClass]="{ 'step-primary': stepState >= 1 }">Join Session</li>
@@ -25,6 +43,9 @@
         Use Chrome/Edge (WebUSB or WebSerial) or Firefox 151+ (WebSerial).
       </div>
     </div>
+    <button *ngIf="isAwMode && isCurrentlyIn(StepsState.ConnectingCelioDevice)" (click)="resetAwVariant()" class="btn btn-sm text-2xl absolute top-3 right-2">
+      {{ awVariant === 2 ? 'Advance Wars 2' : 'Advance Wars' }} — Change Game
+    </button>
     <img *ngIf="isCurrentlyIn(StepsState.ConnectingCelioDevice)" src="assets/down_arrow.png" class="animate-bob absolute bottom-3 right-2 w-6 h-6 image-pixelated" />
   </div>
 

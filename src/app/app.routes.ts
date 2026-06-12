@@ -14,10 +14,11 @@ export const routes: Routes = [
       { path: '', redirectTo: 'onlineLink', pathMatch: 'full' },
       { path: 'onlineLink', component: OnlineLinkComponent,
         data: { linkMode: Mode.onlineLink, readyInstruction: "Link Mode is now ready! If you haven't already, connect the <br> Link-Cable to your Gameboy Advance and talk to the Pokémon Center clerk." } },
+      // No awVariant in the route data: the page asks the user to pick
+      // Advance Wars 1 or 2 before connecting, which also sets the
+      // ready-screen copy.
       { path: 'advanceWarsLink', component: OnlineLinkComponent,
-        data: { linkMode: Mode.advanceWars, awVariant: 1, readyInstruction: "Link Mode is now ready! Connect the Link Cable to both Game Boy Advances <br> and start a VS battle from the Advance Wars menu." } },
-      { path: 'advanceWars2Link', component: OnlineLinkComponent,
-        data: { linkMode: Mode.advanceWars, awVariant: 2, readyInstruction: "Link Mode is now ready! Connect the Link Cable to both Game Boy Advances <br> and start a VS battle from the Advance Wars 2 menu." } },
+        data: { linkMode: Mode.advanceWars } },
       { path: 'tradeEmu', component: TradeEmuComponent },
       { path: 'emulatorLink', component: EmulatorLinkComponent },
       { path: 'emulatorOnlineLink', component: EmulatorOnlineLinkComponent }

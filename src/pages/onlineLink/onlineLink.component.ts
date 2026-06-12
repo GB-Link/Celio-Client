@@ -46,6 +46,26 @@ export class OnlineLinkComponent extends CelioPageAbstract<StepsState>{
   protected awVariant: number | undefined = this.route.snapshot.data['awVariant'];
   protected readyInstruction: string = this.route.snapshot.data['readyInstruction'] ?? '';
 
+  protected get isAwMode(): boolean {
+    return this.linkMode === Mode.advanceWars;
+  }
+
+  // Advance Wars covers two games with different link protocols; the page
+  // blocks until the user picks one so the right variant reaches the firmware.
+  protected get awVariantNeeded(): boolean {
+    return this.isAwMode && this.awVariant === undefined;
+  }
+
+  protected selectAwVariant(variant: number) {
+    this.awVariant = variant;
+    this.readyInstruction = "Link Mode is now ready! Connect the Link Cable to both Game Boy Advances <br> and start a VS battle from the "
+      + (variant === 2 ? "Advance Wars 2" : "Advance Wars") + " menu.";
+  }
+
+  protected resetAwVariant() {
+    this.awVariant = undefined;
+  }
+
   protected sessionId: string | undefined = "";
 
   protected StepsState = StepsState;
