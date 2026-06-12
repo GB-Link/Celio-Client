@@ -105,8 +105,9 @@ export class OnlineLinkComponent extends CelioPageAbstract<StepsState>{
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     if (this.linkDeviceService.isConnected()) {
+      if (!await this.checkAwFirmware()) return;
       this.advanceLinkState(StepsState.JoiningSession);
     }
   }
@@ -123,12 +124,37 @@ export class OnlineLinkComponent extends CelioPageAbstract<StepsState>{
     if (kind === 'usb' ? !this.usbSupported : !this.serialSupported) return;
 
     this.linkDeviceService.connectDevice(kind)
-      .then(isConnected => {
+      .then(async isConnected => {
         if (isConnected) {
+          if (!await this.checkAwFirmware()) return;
           this.advanceLinkState(StepsState.JoiningSession);
         }
       }
     )
+  }
+
+  // The Advance Wars protocol proxy shipped in firmware 2.2.0; the relay in
+  // older builds can't link over the internet, so block AW sessions early
+  // instead of failing mid-handshake. Other modes work on older firmware.
+  private static readonly awMinFirmware = { major: 2, minor: 2, patch: 0 };
+
+  private async checkAwFirmware(): Promise<boolean> {
+    if (!this.isAwMode) return true;
+
+    const min = OnlineLinkComponent.awMinFirmware;
+    const version = await this.linkDeviceService.getFirmwareVersion();
+    const ok = version !== undefined && (
+      version.major !== min.major ? version.major > min.major :
+      version.minor !== min.minor ? version.minor > min.minor :
+      version.patch >= min.patch);
+    if (ok) return true;
+
+    const have = version ? `v${version.major}.${version.minor}.${version.patch}` : 'an unknown version';
+    this.toast?.show(
+      `Advance Wars needs firmware v${min.major}.${min.minor}.${min.patch} or newer — this adapter is running ${have}. Update it from the GBLink launcher and reconnect.`,
+      'error', 8000);
+    await this.linkDeviceService.disconnect();
+    return false;
   }
 
   start() {
