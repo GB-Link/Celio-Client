@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
-import {CommandType, DataArray, FirmwareVersion, LinkStatus} from '../shared/linkExchange/common';
+import {CommandType, DataArray, LinkStatus} from '../shared/linkExchange/common';
 
 type Mode = 'usb' | 'serial';
 
@@ -226,7 +226,9 @@ export class LinkDeviceService {
         this.dataRawEventSubject.next(new Uint8Array(result.data.buffer, result.data.byteOffset, result.data.byteLength));
       }
       if (this.mode === 'usb') this.readData()
-    }, (err: Error) => {console.log(err)})
+    }, (err: Error) => {
+      console.log(err)
+    })
   }
 
   private readStatus() {
@@ -282,32 +284,6 @@ export class LinkDeviceService {
     }
   }
 
-  // Query the firmware version (GetFirmwareInfo, 0x0F). The reply arrives on
-  // the data channel, so subscribe before sending. Resolves undefined on
-  // timeout — firmware too old to answer, or no device.
-  getFirmwareVersion(timeoutMs: number = 1500): Promise<FirmwareVersion | undefined> {
-    return new Promise(resolve => {
-      const timer = setTimeout(() => {
-        subscription.unsubscribe();
-        resolve(undefined);
-      }, timeoutMs);
-      const subscription = this.dataRawEvents$.subscribe(bytes => {
-        if (bytes.length >= 4 && bytes[0] === CommandType.GetFirmwareInfo) {
-          clearTimeout(timer);
-          subscription.unsubscribe();
-          resolve({ major: bytes[1], minor: bytes[2], patch: bytes[3] });
-        }
-      });
-      this.sendCommand(CommandType.GetFirmwareInfo).then(sent => {
-        if (!sent) {
-          clearTimeout(timer);
-          subscription.unsubscribe();
-          resolve(undefined);
-        }
-      });
-    });
-  }
-
   async disconnect() {
     if (this.mode === 'serial') {
       try { if (this.reader) await this.reader.cancel(); } catch (_) {}
@@ -319,7 +295,7 @@ export class LinkDeviceService {
       this.port = undefined;
       this.mode = undefined;
     } else if (this.mode === 'usb') {
-      this.device!.close();
+      await this.device!.close();
       this.device = undefined;
       this.mode = undefined;
     }
