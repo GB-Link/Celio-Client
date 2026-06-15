@@ -44,6 +44,7 @@ export class AwOnlineLinkComponent extends CelioPageAbstract<StepsState>{
   // Per-route (app.routes.ts): which firmware mode this page drives and the matching ready-screen copy.
   protected awVariant: number | undefined;
   protected readyInstruction: string | undefined;
+  protected preStartInstruction: string | undefined;
 
   protected sessionId: string | undefined = "";
 
@@ -124,8 +125,10 @@ export class AwOnlineLinkComponent extends CelioPageAbstract<StepsState>{
   protected async selectAwVariant(variant: number) {
     if (!await this.checkAwFirmware()) return;
     this.awVariant = variant;
-    this.readyInstruction = "Link Mode is now ready! Connect the Link Cable to the Game Boy Advance <br> and start a VS battle from the "
-      + (variant === 2 ? "Advance Wars 2 " : "Advance Wars ") + "menu.";
+    this.preStartInstruction = "Before you press Start, connect your Game Boy Advance with the link cable and bring "
+      + (variant === 2 ? "Advance Wars 2" : "Advance Wars") + " to the <b>\"Preparing to link\"</b> screen.";
+    this.readyInstruction = (variant === 2 ? "Advance Wars 2" : "Advance Wars")
+      + "<br>Link Mode is now ready! Tip: Advance through setup menus carefully to avoid desyncs. Transferring custom maps can take several minutes.";
     this.advanceLinkState(StepsState.JoiningSession);
   }
 
