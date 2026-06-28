@@ -12,6 +12,7 @@ import {CommandEmitterSocketIO} from '../../shared/linkExchange/commandEmitter/c
 import {CelioPageAbstract} from '../shared/celioPage.abstact';
 import {CelioSessionComponent, SessionState} from '../../component/panel/session/session.compomemt';
 import {StatusEmitterLinkDevice} from '../../shared/linkExchange/statusEmitter/statusEmitter.linkDevice';
+import {ToastService} from '../../component/toast/toast.service';
 
 enum StepsState {
   ChooseEmulator = 0,
@@ -29,14 +30,11 @@ enum StepsState {
   imports: [
     NgIf,
     NgClass,
-    ToastComponent,
     CelioSessionComponent
   ],
   templateUrl: './emulatorOnlineLink.component.html'
 })
 export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
-
-  @ViewChild(ToastComponent) toast!: ToastComponent;
   @ViewChild(CelioSessionComponent) sessionPanel!: CelioSessionComponent;
 
   protected StepsState = StepsState;
@@ -47,7 +45,7 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
 
   private statusEmitterWebsocket: StatusEmitterWebsocket | undefined = undefined;
 
-  constructor(cd: ChangeDetectorRef, private socket: WebSocketService, private emulatorSelection: EmulatorSelectionService) {
+  constructor(cd: ChangeDetectorRef, private toastService: ToastService, private socket: WebSocketService, private emulatorSelection: EmulatorSelectionService) {
     super(cd);
     this.stepState = StepsState.ChooseEmulator;
   }
@@ -70,10 +68,8 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
         case SessionState.Waiting:
           if (this.stepState == StepsState.Ready) {
             this.statusEmitterWebsocket?.destroy();
-            this.toast.show("Partner has disconnected, please create a new Session");
           } else {
             this.advanceLinkState(StepsState.WaitingForPartner);
-            this.toast.show("Partner has disconnected");
           }
           break;
         case SessionState.Commit: this.advanceLinkState(StepsState.SettingLinkMode); break;
@@ -86,7 +82,7 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
     this.statusEmitterWebsocket?.destroy();
   }
 
-  emulatorSelected(emulator: SupportedEmulators) {
+  emulatorSelected(emulator: SupportedEmulators) { 
     this.emulatorSelection.setSelectedEmulator(emulator)
     this.advanceLinkState(StepsState.DownloadPlugin)
   }
@@ -121,7 +117,7 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
         this.advanceLinkState(StepsState.Ready);
       })
       .catch(error => {
-        this.toast.show(error, 'error', 4000)
+        this.toastService.show(error, 'error', 4000)
         console.error(error);
       })
   }

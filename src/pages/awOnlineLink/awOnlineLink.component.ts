@@ -3,8 +3,7 @@ import { NgClass, NgIf } from '@angular/common';
 
 import {CommandType, LinkMode} from '../../shared/linkExchange/common';
 
-import {Subscription, take} from 'rxjs';
-import {PlayerSessionService} from '../../services/playersession.service';
+import {Subscription} from 'rxjs';
 import {WebSocketService} from '../../services/websocket.service';
 import {LinkExchangeSession} from '../../shared/linkExchange/linkExchangeSession';
 import {ToastComponent} from '../../component/toast/toast.component';
@@ -15,6 +14,7 @@ import {StatusEmitterLinkDevice} from '../../shared/linkExchange/statusEmitter/s
 import {CelioPageAbstract} from '../shared/celioPage.abstact';
 import {CelioConnectionStatusComponent} from '../../component/panel/connect/connect.component';
 import {CelioSessionComponent, SessionState} from '../../component/panel/session/session.compomemt';
+import {ToastService} from '../../component/toast/toast.service';
 
 enum StepsState {
   ConnectingCelioDevice = 0,
@@ -31,7 +31,6 @@ enum StepsState {
   imports: [
     NgIf,
     NgClass,
-    ToastComponent,
     CelioConnectionStatusComponent,
     CelioSessionComponent
   ],
@@ -39,8 +38,6 @@ enum StepsState {
 })
 
 export class AwOnlineLinkComponent extends CelioPageAbstract<StepsState>{
-
-  @ViewChild(ToastComponent) toast!: ToastComponent;
   @ViewChild(CelioConnectionStatusComponent) connectionPanel!: CelioConnectionStatusComponent;
   @ViewChild(CelioSessionComponent) sessionPanel!: CelioSessionComponent;
 
@@ -59,7 +56,7 @@ export class AwOnlineLinkComponent extends CelioPageAbstract<StepsState>{
   // instead of failing mid-handshake. Other modes work on older firmware.
   private static readonly awMinFirmware = { major: 2, minor: 2, patch: 0 };
 
-  constructor(cd: ChangeDetectorRef, private playerSessionService: PlayerSessionService, private socket: WebSocketService) {
+  constructor(cd: ChangeDetectorRef, private toastService: ToastService, private socket: WebSocketService) {
     super(cd);
     this.stepState = StepsState.ConnectingCelioDevice;
 
@@ -136,7 +133,7 @@ export class AwOnlineLinkComponent extends CelioPageAbstract<StepsState>{
     if (ok) return true;
 
     const have = version ? `v${version.major}.${version.minor}.${version.patch}` : 'an unknown version';
-    this.toast?.show(
+    this.toastService.show(
       `Advance Wars needs firmware v${min.major}.${min.minor}.${min.patch} or newer — this adapter is running ${have}. Update it from the GBLink launcher and reconnect.`,
       'error', 8000);
     await this.linkDeviceService.disconnect();
@@ -149,7 +146,7 @@ export class AwOnlineLinkComponent extends CelioPageAbstract<StepsState>{
         this.advanceLinkState(StepsState.Ready);
       })
       .catch(error => {
-        this.toast.show(error, 'error', 4000)
+        this.toastService.show(error, 'error', 4000)
         console.error(error);
         this.disconnectCelioDevice();
       })

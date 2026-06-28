@@ -11,6 +11,7 @@ import {StatusEmitterLinkDevice} from '../../shared/linkExchange/statusEmitter/s
 import {CelioPageAbstract} from '../shared/celioPage.abstact';
 import {EmulatorSelectionService, SupportedEmulators} from '../../services/emulatorSelection.service';
 import {CelioConnectionStatusComponent} from '../../component/panel/connect/connect.component';
+import {ToastService} from '../../component/toast/toast.service';
 
 
 enum StepsState {
@@ -28,14 +29,11 @@ enum StepsState {
   imports: [
     NgIf,
     NgClass,
-    ToastComponent,
     CelioConnectionStatusComponent
   ],
   templateUrl: './emulatorLink.component.html'
 })
 export class EmulatorLinkComponent extends CelioPageAbstract<StepsState>{
-
-  @ViewChild(ToastComponent) toast!: ToastComponent;
 
   private linkDeviceService = inject(LinkDeviceService)
   protected linkDeviceConnected = false;
@@ -51,7 +49,7 @@ export class EmulatorLinkComponent extends CelioPageAbstract<StepsState>{
   private disconnectSubscription: Subscription;
   private statusSubscription: Subscription
 
-  constructor(cd: ChangeDetectorRef, private emulatorSelection: EmulatorSelectionService) {
+  constructor(cd: ChangeDetectorRef, private toastService: ToastService, private emulatorSelection: EmulatorSelectionService) {
     super(cd);
     this.stepState = StepsState.ConnectingCelioDevice;
 
@@ -143,7 +141,7 @@ export class EmulatorLinkComponent extends CelioPageAbstract<StepsState>{
         this.advanceLinkState(StepsState.Ready);
       })
       .catch(error => {
-        this.toast.show(error, 'error', 4000)
+        this.toastService.show(error, 'error', 4000)
         console.error(error);
         this.disconnect();
         this.linkSession?.destroy();

@@ -1,7 +1,6 @@
 import { Component, Input } from '@angular/core';
 import {NgClass, NgIf} from '@angular/common';
-
-export type ToastType = 'warning' | 'error' | 'info';
+import {ToastService, ToastType} from './toast.service';
 
 @Component({
   selector: 'app-toast',
@@ -16,13 +15,15 @@ export class ToastComponent {
   visible = false;
   type: ToastType = 'warning';
 
-  show(message: string, type: ToastType = 'warning', duration = 3000) {
-    this.message = message;
-    this.type = type;
-    this.visible = true;
+  constructor(private toastService: ToastService) {
+    this.toastService.toast$.subscribe(toast => {
+      this.message = toast.text
+      this.type = toast.type
+      this.visible = true;
 
-    setTimeout(() => {
-      this.visible = false;
-    }, duration);
+      setTimeout(() => {
+        this.visible = false;
+      }, toast.duration);
+    })
   }
 }
