@@ -4,10 +4,8 @@ import {NgClass, NgIf} from '@angular/common';
 import {CommandType} from '../../shared/linkExchange/common';
 
 import {Subscription} from 'rxjs';
-import {PlayerSessionService} from '../../services/playersession.service';
 import {WebSocketService} from '../../services/websocket.service';
 import {LinkExchangeSession} from '../../shared/linkExchange/linkExchangeSession';
-import {ToastComponent} from '../../component/toast/toast.component';
 import {LinkDeviceUtils} from '../../shared/linkDeviceUtils';
 import {CommandEmitterSocketIO} from '../../shared/linkExchange/commandEmitter/commandEmitter.socketIO';
 import {LinkDeviceService} from '../../services/linkdevice.service';
@@ -15,7 +13,7 @@ import {StatusEmitterLinkDevice} from '../../shared/linkExchange/statusEmitter/s
 import {CelioPageAbstract} from '../shared/celioPage.abstact';
 import {CelioConnectionStatusComponent} from '../../component/panel/connect/connect.component';
 import {CelioSessionComponent, SessionState} from '../../component/panel/session/session.compomemt';
-import {ToastService} from '../../component/toast/toast.service';
+import {ToastService} from '../../services/toast.service';
 
 enum StepsState {
   ConnectingCelioDevice = 0,
@@ -76,8 +74,6 @@ export class OnlineLinkComponent extends CelioPageAbstract<StepsState>{
       }
     })
   }
-
-  test() { return true }
 
   ngOnDestroy() {
     this.disconnectSubscription.unsubscribe();

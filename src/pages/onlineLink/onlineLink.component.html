@@ -13,7 +13,7 @@
 
   <div class="divider"></div>
 
-  <celio-session-panel [active]="isCurrentlyIn(StepsState.JoiningSession)"></celio-session-panel>
+  <celio-session-panel [active]="hasReached(StepsState.JoiningSession)"></celio-session-panel>
 
   <div [class.opacity-100]="hasReached(StepsState.SettingLinkMode)" class="transition-opacity opacity-0 duration-500 ease-in-out">
     <div class="box relative">

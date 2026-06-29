@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import {NgClass, NgIf} from '@angular/common';
-import {ToastService, ToastType} from './toast.service';
+import {ToastService, ToastType} from '../../services/toast.service';
 
 @Component({
   selector: 'app-toast',

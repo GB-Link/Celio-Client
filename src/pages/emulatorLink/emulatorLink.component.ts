@@ -11,7 +11,7 @@ import {StatusEmitterLinkDevice} from '../../shared/linkExchange/statusEmitter/s
 import {CelioPageAbstract} from '../shared/celioPage.abstact';
 import {EmulatorSelectionService, SupportedEmulators} from '../../services/emulatorSelection.service';
 import {CelioConnectionStatusComponent} from '../../component/panel/connect/connect.component';
-import {ToastService} from '../../component/toast/toast.service';
+import {ToastService} from '../../services/toast.service';
 
 
 enum StepsState {
@@ -89,22 +89,6 @@ export class EmulatorLinkComponent extends CelioPageAbstract<StepsState>{
     this.disconnectSubscription.unsubscribe();
     this.statusSubscription.unsubscribe();
     this.linkSession?.destroy();
-  }
-
-  connect(kind: 'usb' | 'serial' = 'usb'): void {
-    //if (kind === 'usb' ? !this.usbSupported : !this.serialSupported) return;
-
-    this.linkDeviceService.connectDevice(kind)
-      .then(isConnected => {
-        this.linkDeviceConnected = isConnected
-        if (isConnected) {
-          if (this.emulatorSelection.isSetupComplete()) {
-            this.startWaitForServer()
-          } else {
-            this.advanceLinkState(StepsState.ChooseEmulator);
-          }
-        }
-      })
   }
 
   emulatorSelected(emulator: SupportedEmulators) {

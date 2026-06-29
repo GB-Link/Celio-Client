@@ -4,39 +4,13 @@ import {PlayerSessionService} from '../../../services/playersession.service';
 import {WebSocketService} from '../../../services/websocket.service';
 import {Subscription} from 'rxjs';
 import {LinkExchangeSession} from '../../../shared/linkExchange/linkExchangeSession';
-import {ToastService} from '../../toast/toast.service';
-
+import {ToastService} from '../../../services/toast.service';
+import {CurrentPipe, ReachedPipe} from '../../../shared/stepStateHelper';
 
 export enum SessionState {
   Start = 0,
   Waiting = 1,
   Commit = 2
-}
-
-@Pipe({
-  name: 'hasReachedState',
-  standalone: true,
-})
-export class ReachedPipe {
-  transform<T>(
-    current: T,
-    step: T
-  ): boolean {
-    return current >= step;
-  }
-}
-
-@Pipe({
-  name: 'isCurrentlyInState',
-  standalone: true,
-})
-export class CurrentPipe {
-  transform<T>(
-    current: T,
-    step: T
-  ): boolean {
-    return current == step;
-  }
 }
 
 @Component({
@@ -95,7 +69,7 @@ export class CelioSessionComponent {
   private updateSessionState(state: SessionState) {
     if (this.state == state) return;
     this.state = state;
-    this.updateSessionState(state);
+    this.sessionStateChange.emit(state);
   }
 
   async enterSession(userSessionId?: string) {

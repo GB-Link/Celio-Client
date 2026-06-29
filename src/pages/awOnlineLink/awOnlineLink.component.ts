@@ -14,7 +14,7 @@ import {StatusEmitterLinkDevice} from '../../shared/linkExchange/statusEmitter/s
 import {CelioPageAbstract} from '../shared/celioPage.abstact';
 import {CelioConnectionStatusComponent} from '../../component/panel/connect/connect.component';
 import {CelioSessionComponent, SessionState} from '../../component/panel/session/session.compomemt';
-import {ToastService} from '../../component/toast/toast.service';
+import {ToastService} from '../../services/toast.service';
 
 enum StepsState {
   ConnectingCelioDevice = 0,
@@ -89,24 +89,6 @@ export class AwOnlineLinkComponent extends CelioPageAbstract<StepsState>{
   ngOnDestroy() {
     this.disconnectSubscription.unsubscribe();
     this.sessionPanel.leaveSession();
-  }
-
-  connect(kind: 'usb' | 'serial' = 'usb'): void {
-    //if (kind === 'usb' ? !this.usbSupported : !this.serialSupported) return;
-
-    this.linkDeviceService.connectDevice(kind)
-      .then(async isConnected => {
-        if (isConnected) {
-          this.advanceLinkState(StepsState.SelectGame);
-        }
-      }
-    )
-  }
-
-  // Advance Wars covers two games with different link protocols; the page
-  // blocks until the user picks one so the right variant reaches the firmware.
-  protected get awVariantNeeded(): boolean {
-    return this.awVariant === undefined;
   }
 
   protected async selectAwVariant(variant: number) {

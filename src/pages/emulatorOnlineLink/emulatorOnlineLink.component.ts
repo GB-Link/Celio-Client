@@ -12,7 +12,7 @@ import {CommandEmitterSocketIO} from '../../shared/linkExchange/commandEmitter/c
 import {CelioPageAbstract} from '../shared/celioPage.abstact';
 import {CelioSessionComponent, SessionState} from '../../component/panel/session/session.compomemt';
 import {StatusEmitterLinkDevice} from '../../shared/linkExchange/statusEmitter/statusEmitter.linkDevice';
-import {ToastService} from '../../component/toast/toast.service';
+import {ToastService} from '../../services/toast.service';
 
 enum StepsState {
   ChooseEmulator = 0,
@@ -82,7 +82,7 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
     this.statusEmitterWebsocket?.destroy();
   }
 
-  emulatorSelected(emulator: SupportedEmulators) { 
+  emulatorSelected(emulator: SupportedEmulators) {
     this.emulatorSelection.setSelectedEmulator(emulator)
     this.advanceLinkState(StepsState.DownloadPlugin)
   }
@@ -118,6 +118,7 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
       })
       .catch(error => {
         this.toastService.show(error, 'error', 4000)
+        this.statusEmitterWebsocket?.destroy();
         console.error(error);
       })
   }
