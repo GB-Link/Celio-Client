@@ -64,6 +64,30 @@ export class LinkDeviceUtils {
     await waitForReady;
   }
 
+  // Multiplayer SetMode payload is [mode, seat, playerCount].
+  private static enableOnlineLink(statusEmitter: StatusEmitterAbstract, seat: number, playerCount: number): Promise<void> {
+    const args = new Uint8Array(3);
+    args[0] = LinkMode.onlineLink;
+    args[1] = seat;
+    args[2] = playerCount;
+    return new Promise<void>((resolve, reject) => {
+      statusEmitter.receiveCommand(CommandType.SetMode, args).then(ok => {
+        if (!ok) reject(new Error('Failed to send SetMode (onlineLink)'));
+        resolve();
+      });
+    });
+  }
+
+  static async tryEnableOnlineLink(statusEmitter: StatusEmitterAbstract, seat: number, playerCount: number) {
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    const waitForReady = this.createReadyPromise(statusEmitter);
+
+    await this.sendCancel(statusEmitter);
+    await delay(500);
+    await this.enableOnlineLink(statusEmitter, seat, playerCount);
+    await waitForReady;
+  }
+
   // Query the firmware version (GetFirmwareInfo, 0x0F). The reply arrives on
   // the data channel, so subscribe before sending. Resolves undefined on
   // timeout — firmware too old to answer, or no device.

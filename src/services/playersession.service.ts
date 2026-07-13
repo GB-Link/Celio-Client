@@ -12,6 +12,7 @@ export enum ErrorType {
 interface SessionState {
   id: string;
   full: boolean;
+  seat?: number;  // assigned seat, 0 = host
 }
 
 @Injectable({  providedIn: 'root' })

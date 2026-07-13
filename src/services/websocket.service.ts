@@ -55,6 +55,11 @@ export class WebSocketService {
     this.socket.emit(event, ...args);
   }
 
+  /** Whether the underlying socket is currently connected. */
+  isConnected(): boolean {
+    return this.socket.connected;
+  }
+
    async connect() {
      if (this.socket.connected) { return true; }
 
