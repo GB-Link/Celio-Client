@@ -35,6 +35,8 @@ enum StepsState {
 })
 export class EmulatorLinkComponent extends CelioPageAbstract<StepsState>{
 
+  @ViewChild(CelioConnectionStatusComponent) connectionPanel!: CelioConnectionStatusComponent;
+
   private linkDeviceService = inject(LinkDeviceService)
   protected linkDeviceConnected = false;
 
@@ -63,12 +65,9 @@ export class EmulatorLinkComponent extends CelioPageAbstract<StepsState>{
     this.statusSubscription = this.linkDeviceService.statusEvents$.subscribe(statusEvents => {
       console.log("Status: " + LinkStatus[statusEvents]);
       if (statusEvents === LinkStatus.LinkClosed) {
-
-        //FIXME When socket is closed by server, this and closed$ is called. Clean up closing states
         if (this.stepState == StepsState.WaitForLocalServer) return;
         this.linkSession?.destroy();
         this.linkSession = undefined;
-        this.startWaitForServer(1500);
       }
     });
   }
@@ -81,6 +80,10 @@ export class EmulatorLinkComponent extends CelioPageAbstract<StepsState>{
         this.advanceLinkState(StepsState.ChooseEmulator);
       }
     }
+  }
+
+  ngAfterViewInit() {
+    this.connectionPanel.next.subscribe(() => { this.advanceLinkState(StepsState.ChooseEmulator);})
   }
 
   ngOnDestroy() {
@@ -108,13 +111,27 @@ export class EmulatorLinkComponent extends CelioPageAbstract<StepsState>{
       .subscribe(() => {
         if (this.linkDeviceService.isConnected()) {
           this.linkDeviceService.sendCommand(CommandType.Cancel);
+          console.log("Starting after Close$ fired");
           if (!this.closing) this.startWaitForServer();
         }
       });
+
+    this.closing = false;
     this.timeoutId = setTimeout(() => {
       commandEmitterWebsocket.open().then(() => {
         this.timeoutId = undefined;
-        this.advanceLinkState(StepsState.SettingLinkMode);
+        commandEmitterWebsocket?.checkVersion().then((passedCheck) => {
+          console.log("Passed version check: " + passedCheck);
+          if (passedCheck) {
+            this.advanceLinkState(StepsState.SettingLinkMode)
+          } else {
+            this.emulatorSelection.setSetupComplete(false);
+            this.closing = true;
+            this.linkSession?.destroy();
+            this.advanceLinkState(StepsState.DownloadPlugin)
+            this.toastService.show("Please download the newest script version.", 'error', 3000)
+          }
+        })
       })
     }, delay)
   }

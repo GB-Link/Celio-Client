@@ -103,10 +103,23 @@ export class EmulatorOnlineLinkComponent extends CelioPageAbstract<StepsState>{
       .pipe(take(1))
       .subscribe(() => {this.cleanup()});
 
+    this.closing = false;
     this.timeoutId = setTimeout(() => {
       this.statusEmitterWebsocket?.open().then(() => {
         this.timeoutId = undefined;
-        this.advanceLinkState(StepsState.JoiningSession)
+        this.statusEmitterWebsocket?.checkVersion().then((passedCheck) => {
+          console.log("Passed version check: " + passedCheck);
+          if (passedCheck) {
+            this.advanceLinkState(StepsState.JoiningSession)
+          } else {
+            this.emulatorSelection.setSetupComplete(false);
+            this.closing = true;
+            this.statusEmitterWebsocket?.destroy();
+            this.advanceLinkState(StepsState.DownloadPlugin)
+            this.toastService.show("Please download the newest script version.", 'error', 3000)
+          }
+        })
+
       })
     }, delay)
   }

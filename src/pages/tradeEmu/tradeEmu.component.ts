@@ -1,4 +1,4 @@
-import {Component, inject, ChangeDetectorRef} from '@angular/core';
+import {Component, inject, ChangeDetectorRef, ViewChild} from '@angular/core';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {CommandType, LinkStatus, LinkMode} from '../../shared/linkExchange/common';
 import {Subscription} from 'rxjs';
@@ -26,6 +26,9 @@ enum StepsState {
   templateUrl: './tradeEmu.component.html'
 })
 export class TradeEmuComponent extends CelioPageAbstract<StepsState>{
+
+  @ViewChild(CelioConnectionStatusComponent) connectionPanel!: CelioConnectionStatusComponent;
+
   private linkDeviceService = inject(LinkDeviceService)
   protected linkDeviceConnected = false;
 
@@ -59,6 +62,10 @@ export class TradeEmuComponent extends CelioPageAbstract<StepsState>{
     if (this.linkDeviceService.isConnected()) {
       this.stepState = StepsState.SelectingPokemon;
     }
+  }
+
+  ngAfterViewInit() {
+    this.connectionPanel.next.subscribe(() => { this.advanceLinkState(StepsState.SelectingPokemon);})
   }
 
   ngOnDestroy() {
