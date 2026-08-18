@@ -2,13 +2,16 @@
   <div [class.opacity-100]="active" class="transition-opacity opacity-0 duration-500 ease-in-out">
     <div class="box relative">
 
-      <div *ngIf="state | isCurrentlyInState : SessionState.Start" class="flex w-full h-[5rem]">
+      <div *ngIf="state | isCurrentlyInState : SessionState.Start" class="flex flex-col sm:flex-row w-full min-h-[5rem] h-auto sm:h-[5rem] py-2 sm:py-0">
         <div class="card rounded-box grid grow place-items-center">
-          <button (click)="enterSession()" class="btn btn-lg">Create Session</button>
+          <button (click)="enterSession()" class="btn btn-lg whitespace-nowrap">Create<span class="hidden sm:inline"> Session</span></button>
         </div>
-        <div class="divider divider-horizontal"><div class="font-Gen3 text-4xl">OR</div></div>
+        <div class="divider sm:divider-horizontal"><div class="font-Gen3 text-4xl">OR</div></div>
         <div class="card rounded-box grid grow place-items-center">
-          <input #sessionInput (keydown.enter)="enterSession(sessionInput.value)" type="text" placeholder="Enter Session Id" class="input input-lg w-3xs font-Gen3 text-2xl" />
+          <div class="join w-full max-w-xs sm:w-3xs">
+            <input #sessionInput (keydown.enter)="enterSession(sessionInput.value)" type="text" placeholder="Enter Session Id" class="input input-lg join-item min-w-0 flex-1 font-Gen3 text-2xl" />
+            <button (click)="enterSession(sessionInput.value)" [disabled]="!sessionInput.value" class="btn btn-lg join-item shrink-0">Join</button>
+          </div>
         </div>
       </div>
 
