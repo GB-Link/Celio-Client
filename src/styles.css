@@ -92,6 +92,54 @@
   @apply text-3xl;
 }
 
+.btn:not(
+  .btn-primary,
+  .btn-secondary,
+  .btn-accent,
+  .btn-neutral,
+  .btn-info,
+  .btn-success,
+  .btn-warning,
+  .btn-error,
+  .btn-ghost,
+  .btn-link,
+  .btn-outline,
+  .btn-dash
+) {
+  color-scheme: light;
+  --btn-color: #e8e8e8;
+  --btn-bg: #e8e8e8;
+  --btn-fg: #333c4d;
+  --btn-border: #cfcfcf;
+  --btn-shadow: none;
+  --color-base-200: #e8e8e8;
+  --color-base-content: #333c4d;
+  background-color: #e8e8e8 !important;
+  color: #333c4d !important;
+  border-color: #cfcfcf !important;
+  box-shadow: none !important;
+  text-shadow: none;
+}
+
+.btn:not(
+  .btn-primary,
+  .btn-secondary,
+  .btn-accent,
+  .btn-neutral,
+  .btn-info,
+  .btn-success,
+  .btn-warning,
+  .btn-error,
+  .btn-ghost,
+  .btn-link,
+  .btn-outline,
+  .btn-dash
+):hover {
+  --btn-bg: #dcdcdc;
+  background-color: #dcdcdc !important;
+  border-color: #c4c4c4 !important;
+}
+
 @utility step-warning {
   + .step-warning:before,
   &:after,
@@ -169,16 +217,6 @@
 .menu li > .box-menu:focus,
 .menu li > .box-menu:active {
   background-color: transparent;
-}
-
-[data-theme="emerald-dark"] .box-menu {
-  border-image-source: url("assets/border/menubox-dark.png");
-  background: transparent;
-  color: oklch(92% 0.01 264);
-}
-
-[data-theme="emerald-dark"] .menu-item::before {
-  background-image: url("assets/selection-dark.png");
 }
 
 .menu-item-unselected::before {
