@@ -1,4 +1,4 @@
-<div class="emu-root" [class.emu-full]="fullscreen">
+<div class="emu-root" [class.emu-full]="fullscreen" [class.emu-popped]="popped()" [class.emu-framed]="service.frame()">
   @if (!game()) {
     <div class="box relative" [class.emu-drop]="dragging"
          (dragover)="onDragOver($event)" (dragleave)="dragging = false" (drop)="onDrop($event)">
@@ -37,6 +37,18 @@
         }
       </div>
     </div>
+  } @else if (ownWindow && !popped() && !fullscreen) {
+    <!-- Dropped or picked files don't count as a click, which browsers need to open a window -->
+    <div class="box relative">
+      <div class="flex flex-col gap-3 py-2">
+        <p class="font-Gen3 text-3xl sm:text-4xl">Your game is ready</p>
+        <p class="font-Gen3 text-2xl">It plays in a window of its own.</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="btn" (click)="emulatorWindow.open()">Open game window</button>
+          <button type="button" class="btn" (click)="changeGame()" [disabled]="linked">Change game</button>
+        </div>
+      </div>
+    </div>
   } @else {
     <div class="emu-game">
       <div class="emu-head">
@@ -53,6 +65,13 @@
               }
             </svg>
           </button>
+          <button type="button" class="emu-icon" (click)="toggleFrame()" aria-label="Game Boy Player frame"
+                  [attr.aria-pressed]="service.frame()" [title]="service.frame() ? 'Game Boy Player frame: on' : 'Game Boy Player frame: off'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2.5" y="4" width="19" height="16" rx="2"/>
+              <rect x="7.5" y="8.5" width="9" height="7"/>
+            </svg>
+          </button>
           <button type="button" class="emu-icon" (click)="toggleFullscreen()"
                   [attr.aria-label]="fullscreen ? 'Exit full screen' : 'Full screen'" [title]="fullscreen ? 'Exit full screen' : 'Full screen'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -67,7 +86,12 @@
       </div>
 
       <div class="emu-screen">
-        <canvas #screen width="240" height="160" aria-label="Game screen"></canvas>
+        <div class="emu-frame">
+          @if (service.frame()) {
+            <img class="emu-frame-art" src="assets/emulator/gbp-purple.png" alt="" draggable="false">
+          }
+          <canvas #screen width="240" height="160" aria-label="Game screen"></canvas>
+        </div>
       </div>
 
       <div class="emu-touch" #touch aria-hidden="true">
@@ -93,23 +117,29 @@
         </div>
       </div>
 
-      <div class="emu-toolbar">
-        <button type="button" class="btn btn-sm text-xl" (click)="service.downloadSave()">
-          Download save
-          @if (service.unsaved()) {
-            <span class="emu-dot" title="The game saved since you last downloaded its save"></span>
+      <!-- In a panel in the game's window; on a phone the buttons have the screen's whole width -->
+      <div class="emu-controls" [class.box]="popped() && !fullscreen">
+        <div class="emu-toolbar" [class.emu-toolbar-six]="popped() && !ownWindow">
+          @if (popped() && !ownWindow) {
+            <button type="button" class="btn btn-sm text-xl" (click)="backToPage()">Back to page</button>
           }
-        </button>
-        <button type="button" class="btn btn-sm text-xl" (click)="saveFile.click()" [disabled]="linked || service.starting()">Load save</button>
-        <input #saveFile type="file" accept=".sav" hidden (change)="onFiles($event)">
-        <button type="button" class="btn btn-sm text-xl" (click)="reset()" [disabled]="linked">Reset</button>
-        <button type="button" class="btn btn-sm text-xl" (click)="changeGame()" [disabled]="linked">Change game</button>
-        <button type="button" class="btn btn-sm text-xl" (click)="closeEmulator()" [disabled]="linked">Close</button>
-      </div>
+          <button type="button" class="btn btn-sm text-xl" (click)="service.downloadSave()">
+            Download save
+            @if (service.unsaved()) {
+              <span class="emu-dot" title="The game saved since you last downloaded its save"></span>
+            }
+          </button>
+          <button type="button" class="btn btn-sm text-xl" (click)="saveFile.click()" [disabled]="linked || service.starting()">Load save</button>
+          <input #saveFile type="file" accept=".sav" hidden (change)="onFiles($event)">
+          <button type="button" class="btn btn-sm text-xl" (click)="reset()" [disabled]="linked">Reset</button>
+          <button type="button" class="btn btn-sm text-xl" (click)="changeGame()" [disabled]="linked">Change game</button>
+          <button type="button" class="btn btn-sm text-xl" (click)="closeEmulator()" [disabled]="linked">Close</button>
+        </div>
 
-      <p class="emu-hint font-Gen3 text-xl">
-        Arrow keys move. X is A, Z is B, A and S are L and R, Enter is Start and Space is Select.
-      </p>
+        <p class="emu-hint font-Gen3 text-xl">
+          Arrow keys move. X is A, Z is B, A and S are L and R, Enter is Start and Space is Select.
+        </p>
+      </div>
     </div>
   }
 </div>

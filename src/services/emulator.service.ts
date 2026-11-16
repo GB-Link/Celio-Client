@@ -8,6 +8,7 @@ import {LinkAdapter} from '../emulator/link/linkAdapter';
 
 const EMULATOR_URL = 'emulator/';
 const MUTED_KEY = 'celio-emulator-muted';
+const FRAME_KEY = 'celio-emulator-frame';
 
 export type OpenResult =
   | { ok: true; notice?: string }
@@ -25,6 +26,8 @@ export class EmulatorService {
   /** The game saved since its save was last downloaded. */
   readonly unsaved = signal(false);
   readonly muted = signal(readMuted());
+  /** The Game Boy Player frame is shown around the game's screen. */
+  readonly frame = signal(readFrame());
   readonly library = signal<StoredGame[]>([]);
   /** A game or a save is being opened. */
   readonly starting = signal(false);
@@ -240,13 +243,21 @@ export class EmulatorService {
     } catch { /* storage blocked */ }
   }
 
+  setFrame(frame: boolean): void {
+    this.frame.set(frame);
+    try {
+      localStorage.setItem(FRAME_KEY, frame ? '1' : '0');
+    } catch { /* storage blocked */ }
+  }
+
   /** Shows the game on this canvas, with these touch controls, and runs it. */
   attachView(canvas: HTMLCanvasElement, touchArea: HTMLElement | null): void {
     const emulator = this.emulator;
     if (!emulator) return;
     this.input?.detach();
     emulator.attachCanvas(canvas);
-    const input = new EmulatorInput(emulator, () => !!this.game(), touchArea, () => this.startSound());
+    const view = canvas.ownerDocument.defaultView ?? window;
+    const input = new EmulatorInput(emulator, () => !!this.game(), touchArea, () => this.startSound(), view);
     this.input = input;
     this.zone.runOutsideAngular(() => input.attach());
     this.resume();
@@ -306,4 +317,13 @@ function readMuted(): boolean {
   } catch {
     return false;
   }
+}
+
+/** The frame unless the player chose otherwise; phones and tablets leave it off, for a larger picture. */
+function readFrame(): boolean {
+  try {
+    const stored = localStorage.getItem(FRAME_KEY);
+    if (stored !== null) return stored === '1';
+  } catch { /* storage blocked */ }
+  return !window.matchMedia('(pointer: coarse)').matches;
 }
